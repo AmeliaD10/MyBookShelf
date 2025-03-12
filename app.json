@@ -19,12 +19,7 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff",
-        "permissions": [
-          "READ_EXTERNAL_STORAGE",
-          "WRITE_EXTERNAL_STORAGE",
-          "READ_EXTERNAL_STORAGE",
-          "WRITE_EXTERNAL_STORAGE"
-        ]
+        "permissions": ["READ_EXTERNAL_STORAGE", "WRITE_EXTERNAL_STORAGE"]
       },
       "package": "com.anonymous.MyBookShelf"
     },
@@ -33,8 +28,8 @@
     },
     "plugins": [
       "expo-sqlite",
-      "expo-file-system"
-
+      "expo-file-system",
+      "expo-font"
     ]
   }
 }

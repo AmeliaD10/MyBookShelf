@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet, Alert, ScrollView, Modal } from 'react-native';
 import { setupDatabase, addCategory, getCategories, deleteCategory, editCategory } from '../database/Database';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useTheme } from "../context/ThemeContext";
 
 export default function CategoriesScreen() {
   const [categories, setCategories] = useState([]);
@@ -9,6 +10,7 @@ export default function CategoriesScreen() {
   const [editingCategory, setEditingCategory] = useState(null);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [editedName, setEditedName] = useState('');
+  const { bgColor } = useTheme();
 
   useEffect(() => {
     const loadData = async () => {
@@ -71,9 +73,8 @@ export default function CategoriesScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>📂 Categories</Text>
-
+    <ScrollView contentContainerStyle={[styles.container, { backgroundColor: bgColor }]}>
+    
       <View style={styles.inputContainer}>
         <TextInput
           placeholder="Enter new category"
@@ -151,7 +152,7 @@ export default function CategoriesScreen() {
 }
 
 const styles = StyleSheet.create({
-  // ... existing styles ...
+
 
   container: { 
     flexGrow: 1, 

@@ -153,7 +153,20 @@ export const editCategory = async (id, newName) => {
     throw error; // Propagate error to handle it in the UI
   }
 };
-
+// Edit book details (author and category)
+// This function will be used by your Save Edit button in BooksScreen.jsx
+export const updateBook = async (id, author, category) => {
+  const db = await dbPromise;
+  try {
+    await db.runAsync(
+      `UPDATE books SET author = ?, category = ? WHERE id = ?;`,
+      [author, category, id]
+    );
+    console.log(`✅ Book ID ${id} updated: Author -> ${author}, Category -> ${category}`);
+  } catch (error) {
+    console.error('❌ Error updating book details:', error);
+  }
+};
 
 
 

@@ -1,12 +1,16 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { getBooks, getCategories } from '../database/Database';
+import { useTheme } from "../context/ThemeContext";
 
 export default function FavoriteScreen() {
   const [favoriteBooks, setFavoriteBooks] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedAuthor, setSelectedAuthor] = useState('All');
+  const { bgColor } = useTheme();
+  const navigation = useNavigation();
 
   const fetchFavorites = async () => {
     const books = await getBooks();
@@ -21,14 +25,34 @@ export default function FavoriteScreen() {
     }, [])
   );
 
-  const filteredBooks = selectedCategory === 'All' 
-    ? favoriteBooks 
-    : favoriteBooks.filter(book => book.category === selectedCategory);
+  // Create an authors array from favoriteBooks
+  const authors = ['All', ...Array.from(new Set(favoriteBooks.map(book => book.author)))];
+
+  // Filter books by category and author
+  const filteredBooks = favoriteBooks.filter(book => {
+    const matchesCategory = selectedCategory === 'All' || book.category === selectedCategory;
+    const matchesAuthor = selectedAuthor === 'All' || book.author === selectedAuthor;
+    return matchesCategory && matchesAuthor;
+  });
+
+  const handleBookPress = (book) => {
+    if (!book || !book.file_path) {
+      Alert.alert('Invalid Book', 'Invalid book file or path.');
+      return;
+    }
+    const filePath = book.file_path.toLowerCase();
+    if (filePath.endsWith('.pdf') || filePath.endsWith('.epub')) {
+      navigation.navigate('Reader', { fileUri: book.file_path, title: book.title });
+    } else {
+      Alert.alert(
+        'Unsupported Format',
+        'This file format is not supported. Please use EPUB or PDF files.'
+      );
+    }
+  };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>❤️ Favorite Books</Text>
-      
+    <View style={[styles.container, { backgroundColor: bgColor }]}>
       {/* Category Filter */}
       <View style={styles.categorySection}>
         <FlatList
@@ -56,25 +80,53 @@ export default function FavoriteScreen() {
         />
       </View>
 
+      {/* Author Filter */}
+      <View style={styles.authorSection}>
+        <FlatList
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          data={authors}
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={[
+                styles.categoryChip,
+                selectedAuthor === item && styles.selectedCategoryChip
+              ]}
+              onPress={() => setSelectedAuthor(item)}
+            >
+              <Text style={[
+                styles.categoryChipText,
+                selectedAuthor === item && styles.selectedCategoryChipText
+              ]}>
+                {item}
+              </Text>
+            </TouchableOpacity>
+          )}
+          contentContainerStyle={styles.categoryFilterContainer}
+        />
+      </View>
+
       {/* Books List */}
       <View style={styles.booksSection}>
         {filteredBooks.length === 0 ? (
           <Text style={styles.emptyMessage}>
-            No favorite books {selectedCategory !== 'All' ? `in ${selectedCategory}` : ''}
+            No favorite books {selectedCategory !== 'All' ? `in ${selectedCategory}` : ''}{' '}
+            {selectedAuthor !== 'All' ? `by ${selectedAuthor}` : ''}
           </Text>
         ) : (
           <FlatList
             data={filteredBooks}
             keyExtractor={(item) => item.id.toString()}
             renderItem={({ item }) => (
-              <View style={styles.bookItem}>
+              <TouchableOpacity style={styles.bookItem} onPress={() => handleBookPress(item)}>
                 <View style={styles.bookDetails}>
                   <Text style={styles.bookTitle}>{item.title}</Text>
                   {item.category && (
                     <Text style={styles.bookCategory}>{item.category}</Text>
                   )}
                 </View>
-              </View>
+              </TouchableOpacity>
             )}
             contentContainerStyle={styles.listContainer}
           />
@@ -90,23 +142,21 @@ const styles = StyleSheet.create({
     padding: 30, 
     backgroundColor: '#F8F1FF' 
   },
-  title: { 
-    fontSize: 30, 
-    fontWeight: 'bold', 
-    textAlign: 'center', 
-    color: '#222', 
-    marginBottom: 20 
-  },
   categorySection: {
     height: 60,
-    marginBottom: 10
+    marginTop: -10,
+    marginBottom: -10
+  },
+  authorSection: {
+    height: 60,
+    marginBottom: 5,
   },
   booksSection: {
-    flex: 1 // Takes remaining space
+    flex: 1,
   },
   categoryFilterContainer: {
     paddingVertical: 10,
-    paddingHorizontal: 5
+    paddingHorizontal: 5,
   },
   categoryChip: {
     paddingHorizontal: 16,
@@ -118,7 +168,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
-    elevation: 2
+    elevation: 2,
   },
   selectedCategoryChip: {
     backgroundColor: '#4A90E2',
@@ -129,41 +179,41 @@ const styles = StyleSheet.create({
   },
   selectedCategoryChipText: {
     color: '#fff',
-    fontWeight: '600'
+    fontWeight: '600',
   },
   emptyMessage: { 
     fontSize: 16, 
     textAlign: 'center', 
     color: '#888', 
-    marginTop: 20 
+    marginTop: 20,
   },
   listContainer: { 
-    paddingBottom: 20 
+    paddingBottom: 20,
   },
   bookItem: { 
     backgroundColor: '#fff', 
     padding: 18, 
     borderRadius: 12, 
-    marginBottom: 15, 
+    marginBottom: 10, 
     shadowColor: '#000', 
     shadowOpacity: 0.08, 
     shadowRadius: 6, 
     elevation: 4,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between'
+    justifyContent: 'space-between',
   },
   bookDetails: { 
-    flex: 1 
+    flex: 1,
   },
   bookTitle: { 
     fontSize: 20, 
     fontWeight: 'bold', 
     color: '#222', 
-    marginBottom: 3 
+    marginBottom: 3,
   },
   bookCategory: { 
     fontSize: 14, 
-    color: '#777' 
+    color: '#777',
   },
 });
