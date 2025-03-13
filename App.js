@@ -8,6 +8,7 @@ import { ThemeProvider } from "./context/ThemeContext";
 import BooksScreen from './screens/BooksScreen';
 import EditBookScreen from "./screens/EditBookScreen";
 import EpubScreen from './screens/EpubScreen';
+import CategoryBooksScreen from './screens/CategoryBooksScreen';
 
 
 const Stack = createStackNavigator();
@@ -26,6 +27,7 @@ export default function App() {
           <Stack.Screen name="Reader" component={ReaderScreen} />
           <Stack.Screen name="EditBook" component={EditBookScreen} options={{ title: "Edit Book" }} />
           <Stack.Screen name="EpubScreen" component={EpubScreen} options={{ title: 'EPUB Reader' }} />
+          <Stack.Screen name="CategoryBooks" component={CategoryBooksScreen} options={{ title: 'Books by Category' }} />
         </Stack.Navigator>
       </NavigationContainer>
     </ThemeProvider>

@@ -1,24 +1,50 @@
-import { useState, useEffect } from 'react';
-import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet, Alert, ScrollView, Modal } from 'react-native';
-import { setupDatabase, addCategory, getCategories, deleteCategory, editCategory } from '../database/Database';
+import React, { useState, useEffect } from 'react';
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  FlatList, 
+  TouchableOpacity, 
+  StyleSheet, 
+  Alert, 
+  ScrollView, 
+  Modal 
+} from 'react-native';
+import { setupDatabase, addCategory, getCategories, deleteCategory, editCategory, getBooks } from '../database/Database';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from "../context/ThemeContext";
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
 export default function CategoriesScreen() {
   const [categories, setCategories] = useState([]);
+  const [books, setBooks] = useState([]);
   const [newCategory, setNewCategory] = useState('');
   const [editingCategory, setEditingCategory] = useState(null);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [editedName, setEditedName] = useState('');
   const { bgColor } = useTheme();
+  const navigation = useNavigation();
 
+  // Load categories and books
+  const loadData = async () => {
+    await setupDatabase();
+    const cats = await getCategories();
+    const allBooks = await getBooks();
+    setCategories(cats);
+    setBooks(allBooks);
+  };
+
+  // Initial load when the component mounts
   useEffect(() => {
-    const loadData = async () => {
-      await setupDatabase();
-      setCategories(await getCategories());
-    };
     loadData();
   }, []);
+
+  // Reload data every time the screen is focused
+  useFocusEffect(
+    React.useCallback(() => {
+      loadData();
+    }, [])
+  );
 
   const handleAddCategory = async () => {
     if (!newCategory.trim()) {
@@ -26,9 +52,9 @@ export default function CategoriesScreen() {
       return;
     }
     await addCategory(newCategory);
-    setCategories(await getCategories());
-    setNewCategory('');
+    await loadData();
     Alert.alert('Success', `Category "${newCategory}" added!`);
+    setNewCategory('');
   };
 
   const handleEditCategory = (category) => {
@@ -44,7 +70,7 @@ export default function CategoriesScreen() {
     }
     try {
       await editCategory(editingCategory.id, editedName);
-      setCategories(await getCategories());
+      await loadData();
       Alert.alert('Success', 'Category updated successfully!');
       setIsEditModalVisible(false);
       setEditingCategory(null);
@@ -64,7 +90,7 @@ export default function CategoriesScreen() {
           style: 'destructive',
           onPress: async () => {
             await deleteCategory(categoryId);
-            setCategories(await getCategories());
+            await loadData();
             Alert.alert('Deleted', 'Category has been removed.');
           },
         },
@@ -72,9 +98,39 @@ export default function CategoriesScreen() {
     );
   };
 
+  const renderItem = ({ item }) => {
+    // Count the books in this category
+    const count = books.filter(book => book.category === item.name).length;
+    return (
+      <TouchableOpacity 
+        style={styles.categoryItem}
+        onPress={() => navigation.navigate('CategoryBooks', { category: item.name })}
+      >
+        <View style={styles.categoryContent}>
+          <Text style={styles.categoryText}>{item.name}</Text>
+          <Text style={styles.countText}>{count} {count === 1 ? "book" : "books"}</Text>
+        </View>
+        <View style={styles.actionContainer}>
+          <TouchableOpacity 
+            style={styles.editContainer}
+            onPress={() => handleEditCategory(item)}
+          >
+            <MaterialIcons name="edit" size={22} style={styles.editIcon} />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.deleteContainer}
+            onPress={() => handleDeleteCategory(item.id)}
+          >
+            <MaterialIcons name="delete-outline" size={22} style={styles.deleteIcon} />
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
   return (
     <ScrollView contentContainerStyle={[styles.container, { backgroundColor: bgColor }]}>
-    
+      <Text style={styles.header}>Categories</Text>
       <View style={styles.inputContainer}>
         <TextInput
           placeholder="Enter new category"
@@ -87,31 +143,12 @@ export default function CategoriesScreen() {
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.subtitle}>Available Categories</Text>
       <FlatList
         data={categories}
         keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <View style={styles.categoryItem}>
-            <Text style={styles.categoryText}>{item.name}</Text>
-
-            <View style={styles.actionContainer}>
-              <TouchableOpacity 
-                style={styles.editContainer}
-                onPress={() => handleEditCategory(item)}
-              >
-                <MaterialIcons name="edit" size={22} style={styles.editIcon} />
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={styles.deleteContainer}
-                onPress={() => handleDeleteCategory(item.id)}
-              >
-                <MaterialIcons name="delete-outline" size={22} style={styles.deleteIcon} />
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
+        renderItem={renderItem}
+        numColumns={2}
+        columnWrapperStyle={styles.columnWrapper}
         scrollEnabled={false}
       />
 
@@ -152,24 +189,18 @@ export default function CategoriesScreen() {
 }
 
 const styles = StyleSheet.create({
-
-
   container: { 
     flexGrow: 1, 
     paddingHorizontal: 30, 
     paddingVertical: 35, 
- backgroundColor: '#F8F1FF'
+    backgroundColor: '#F8F1FF'
   },
-  title: { 
-    fontSize: 30, 
-    fontWeight: 'bold', 
-    textAlign: 'center', 
-    marginBottom: 25 
-  },
-  subtitle: { 
-    fontSize: 22, 
-    fontWeight: '600', 
-    marginVertical: 20 
+  header: {
+    fontSize: 30,
+    fontWeight: 'bold',
+    marginBottom: 25,
+    textAlign: 'center',
+    color: '#333'
   },
   inputContainer: { 
     flexDirection: 'row', 
@@ -201,33 +232,59 @@ const styles = StyleSheet.create({
     fontWeight: 'bold', 
     fontSize: 17 
   },
-  categoryItem: { 
-    flexDirection: 'row',
+  columnWrapper: {
     justifyContent: 'space-between',
-    alignItems: 'center',
+    marginBottom: 15,
+  },
+  categoryItem: { 
+    flex: 1,
+    backgroundColor: '#ffffff', 
     paddingVertical: 14, 
     paddingHorizontal: 18, 
-    backgroundColor: '#ffffff', 
     borderRadius: 10, 
     shadowColor: '#000', 
     shadowOffset: { width: 0, height: 3 }, 
     shadowOpacity: 0.1, 
     shadowRadius: 4, 
     elevation: 3, 
-    marginBottom: 12 
+    marginBottom: 15,
+    marginHorizontal: 5,
+  },
+  categoryContent: {
+    marginBottom: 10,
   },
   categoryText: { 
     fontSize: 19, 
-    fontWeight: '500' 
+    fontWeight: '500',
+    color: '#222',
+    marginBottom: 5,
+    textAlign: 'center',
   },
-  deleteButton: {
-    padding: 10,
-    borderRadius: 6,
-    backgroundColor: '#ffffff',
+  countText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
   },
-  deleteButtonText: {
-    color: 'white',
-    fontSize: 17
+  actionContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  editContainer: {
+    marginRight: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#E8F4FC',
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+    marginLeft: 13,
+  },
+  editIcon: {
+    color: '#4A90E2'
   },
   deleteContainer: { 
     justifyContent: 'center', 
@@ -235,11 +292,14 @@ const styles = StyleSheet.create({
     width: 40, 
     height: 40, 
     borderRadius: 20, 
-    backgroundColor: '#FCE8E8', // Soft pastel red
+    backgroundColor: '#FCE8E8', 
     shadowColor: '#000', 
     shadowOpacity: 0.05, 
     shadowRadius: 4, 
     elevation: 2 
+  },
+  deleteIcon: {
+    color: '#E25C5C'
   },
   modalContainer: {
     flex: 1,
@@ -288,39 +348,4 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
   },
-  actionContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  editContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#E8F4FC',
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2
-  },
-  deleteContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#FCE8E8',
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2
-  },
-  editIcon: {
-    color: '#4A90E2'
-  },
-  deleteIcon: {
-    color: '#E25C5C'
-  }
 });

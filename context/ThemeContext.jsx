@@ -15,7 +15,7 @@ export const ThemeProvider = ({ children }) => {
 
   // Function to reset all settings
   const resetSettings = () => {
-    setBgColor("#F7E7CE");
+    setBgColor("#F8F1FF");
     setFontFamily("System");
     setDarkMode(false);
   };

@@ -24,10 +24,28 @@ export const setupDatabase = async () => {
     );
   `);
 
-  await addFavoriteColumn(); // Ensure the favorite column exists
-  console.log('✅ Books and Categories tables checked/created.');
-};
+// Create folders table
+await db.execAsync(`
+  CREATE TABLE IF NOT EXISTS folders (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT UNIQUE
+  );
+`);
 
+// Create linking table between folders and books
+await db.execAsync(`
+  CREATE TABLE IF NOT EXISTS folder_books (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    folder_id INTEGER,
+    book_id INTEGER,
+    FOREIGN KEY(folder_id) REFERENCES folders(id),
+    FOREIGN KEY(book_id) REFERENCES books(id)
+  );
+`);
+await addFavoriteColumn(); // Ensure the favorite column exists
+  console.log('✅ Books and Categories tables checked/created.');
+
+};  
 
 // Add a book
 export const addBook = async (title, author, filePath, category) => {
@@ -155,18 +173,91 @@ export const editCategory = async (id, newName) => {
 };
 // Edit book details (author and category)
 // This function will be used by your Save Edit button in BooksScreen.jsx
-export const updateBook = async (id, author, category) => {
+export const updateBook = async (id, title, author, category) => {
   const db = await dbPromise;
   try {
     await db.runAsync(
-      `UPDATE books SET author = ?, category = ? WHERE id = ?;`,
-      [author, category, id]
+      `UPDATE books SET title = ?, author = ?, category = ? WHERE id = ?;`,
+      [title, author, category, id]
     );
-    console.log(`✅ Book ID ${id} updated: Author -> ${author}, Category -> ${category}`);
+    console.log(`✅ Book ID ${id} updated: Title -> ${title}, Author -> ${author}, Category -> ${category}`);
   } catch (error) {
     console.error('❌ Error updating book details:', error);
   }
 };
 
 
+// Add a book to a folder
+export const addBookToFolder = async (folderId, bookId) => {
+  const db = await dbPromise;
+  try {
+    await db.runAsync(
+      `INSERT INTO folder_books (folder_id, book_id) VALUES (?, ?);`,
+      [folderId, bookId]
+    );
+    console.log(`✅ Book ${bookId} added to folder ${folderId}`);
+  } catch (error) {
+    console.error("❌ Error adding book to folder:", error);
+  }
+};
+
+// Get all books for a specific folder
+export const getBooksByFolder = async (folderId) => {
+  const db = await dbPromise;
+  try {
+    const result = await db.getAllAsync(
+      `SELECT books.* FROM books 
+       JOIN folder_books ON books.id = folder_books.book_id 
+       WHERE folder_books.folder_id = ?;`,
+      [folderId]
+    );
+    console.log(`📚 Retrieved books for folder ${folderId}:`, result);
+    return result;
+  } catch (error) {
+    console.error("❌ Error retrieving books for folder:", error);
+    return [];
+  }
+};
+export const addFolder = async (name) => {
+  const db = await dbPromise;
+  try {
+    await db.runAsync(`INSERT INTO folders (name) VALUES (?);`, [name]);
+    console.log(`✅ Folder added: ${name}`);
+  } catch (error) {
+    console.error("❌ Error adding folder:", error);
+  }
+};
+export const getFolders = async () => {
+  const db = await dbPromise;
+  try {
+    const result = await db.getAllAsync(`SELECT * FROM folders;`);
+    console.log("📂 Retrieved folders:", result);
+    return result;
+  } catch (error) {
+    console.error("❌ Error retrieving folders:", error);
+    return [];
+  }
+};
+export const updateFolder = async (id, newName) => {
+  const db = await dbPromise;
+  try {
+    await db.runAsync(`UPDATE folders SET name = ? WHERE id = ?;`, [newName, id]);
+    console.log(`✅ Folder with id ${id} updated to: ${newName}`);
+  } catch (error) {
+    console.error("❌ Error updating folder:", error);
+  }
+};
+
+export const deleteFolder = async (id) => {
+  const db = await dbPromise;
+  try {
+    // Delete any entries in folder_books associated with this folder
+    await db.runAsync(`DELETE FROM folder_books WHERE folder_id = ?;`, [id]);
+    // Delete the folder itself
+    await db.runAsync(`DELETE FROM folders WHERE id = ?;`, [id]);
+    console.log(`✅ Folder with id ${id} deleted.`);
+  } catch (error) {
+    console.error("❌ Error deleting folder:", error);
+  }
+};
 

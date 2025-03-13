@@ -19,9 +19,17 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff",
-        "permissions": ["READ_EXTERNAL_STORAGE", "WRITE_EXTERNAL_STORAGE"]
+        "permissions": [
+          "READ_EXTERNAL_STORAGE",
+          "WRITE_EXTERNAL_STORAGE"
+        ]
       },
-      "package": "com.anonymous.MyBookShelf"
+      "package": "com.anonymous.MyBookShelf",
+      "permissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.INTERNET"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -30,6 +38,12 @@
       "expo-sqlite",
       "expo-file-system",
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "584f53a2-ac28-4181-951a-08d6b8b665f9"
+      }
+    },
+    "owner": "amelia00dawn"
   }
 }

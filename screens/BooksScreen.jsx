@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   input: { height: 55, borderWidth: 1, borderColor: '#ddd', borderRadius: 10, paddingHorizontal: 12, marginBottom: 15, backgroundColor: '#fff', fontSize: 16 },
   button: { backgroundColor: '#FCE8E8', paddingVertical: 14, borderRadius: 12, alignItems: 'center', marginBottom: 20, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 6, elevation: 3 },
   buttonText: { color: '#000', fontSize: 16, fontWeight: '500' },
-  bookCount: { textAlign: 'center', fontSize: 18, fontWeight: 'bold', color: '#444', backgroundColor: '#FCE8E8', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 10, marginBottom: 15, alignSelf: 'center', marginTop: 40 },
+  bookCount: { textAlign: 'center', fontSize: 18, fontWeight: 'bold', color: '#444', backgroundColor: '#FCE8E8', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 10, marginBottom: 15, alignSelf: 'center', marginTop: 20 },
   bookList: { paddingBottom: 30 },
   bookItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 18, backgroundColor: '#FFFFFF', marginBottom: 12, borderRadius: 12, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 5, elevation: 3 },
   bookInfo: { flex: 1 },

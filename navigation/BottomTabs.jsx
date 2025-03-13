@@ -8,6 +8,10 @@ import SettingsScreen from "../screens/SettingsScreen"; // Import Settings scree
 import ReaderScreen from "../screens/ReaderScreen";
 import PDFReaderScreen from "../screens/PDFReaderScreen";
 import { Ionicons } from "@expo/vector-icons";
+import FoldersScreen from "../screens/FoldersScreen";
+import FolderDetailsScreen from "../screens/FolderDetailsScreen";
+import AddBooksScreen from "../screens/AddBooksScreen";
+
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -74,6 +78,16 @@ function SettingsStack() {
     </Stack.Navigator>
   );
 }
+function FoldersStack() {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen name="FoldersMain" component={FoldersScreen} options={{ title: "Folders" }} />
+      <Stack.Screen name="FolderDetails" component={FolderDetailsScreen} options={{ title: "Folder Details" }} />
+      <Stack.Screen name="AddBooks" component={AddBooksScreen} options={{ title: "Add Books" }} />
+    </Stack.Navigator>
+  );
+}
+
 
 // Bottom Tab Navigator
 export default function BottomTabs() {
@@ -100,10 +114,17 @@ export default function BottomTabs() {
         options={{ tabBarIcon: ({ color, size }) => <Ionicons name="star" size={size} color={color} /> }}
       />
       <Tab.Screen 
+  name="Folders" 
+  component={FoldersStack} 
+  options={{ tabBarIcon: ({ color, size }) => <Ionicons name="folder-open" size={size} color={color} /> }}
+/>
+      <Tab.Screen 
         name="Settings" 
         component={SettingsStack} 
         options={{ tabBarIcon: ({ color, size }) => <Ionicons name="settings" size={size} color={color} /> }}
       />
+
+
     </Tab.Navigator>
   );
 }
